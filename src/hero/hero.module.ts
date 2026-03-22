@@ -6,10 +6,9 @@ import { Hero } from './hero.entity';
 import { LogsModule } from '../logs/logs.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Hero]), LogsModule,],
+  imports: [TypeOrmModule.forFeature([Hero]), LogsModule],
   providers: [HeroService],
   controllers: [HeroController],
   exports: [HeroService],
 })
-
 export class HeroesModule {}

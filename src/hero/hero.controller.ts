@@ -50,42 +50,50 @@ export class HeroController {
       },
     },
   })
- 
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads/images-heroes', 
+        destination: './uploads/images-heroes',
         filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           const fileName = `${req.params.id}-${uniqueSuffix}-${file.originalname}`;
           callback(null, fileName);
         },
       }),
     }),
   )
-  @ApiResponse({ status: 201, description: 'Foto enviada e salva com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Arquivo inválido ou campo incorreto.' })
-  @ApiResponse({ status: 404, description: 'Herói não encontrado.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Foto enviada e salva com sucesso.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Arquivo inválido ou campo incorreto.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Herói não encontrado.',
+  })
   async uploadFile(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-
     if (!file) {
       throw new BadRequestException('Nenhum arquivo foi enviado.');
     }
-    
-    try { 
 
-    const updatedHero = await this.heroService.uploadFilePath(Number(id), file.path);
+    try {
+      const updatedHero = await this.heroService.uploadFilePath(
+        Number(id),
+        file.path,
+      );
 
-    return {
-      message: `Foto do herói ${id} enviada com sucesso!`,
-      hero: updatedHero,
-    };
-
-    } catch(error) {
-
+      return {
+        message: `Foto do herói ${id} enviada com sucesso!`,
+        hero: updatedHero,
+      };
+    } catch (error) {
       if (fs.existsSync(file.path)) {
         fs.unlinkSync(file.path);
       }
@@ -93,7 +101,7 @@ export class HeroController {
       throw error;
     }
   }
-  
+
   @Get()
   @ApiResponse({ status: 200, description: 'Lista de heróis.' })
   async findAll(): Promise<Hero[]> {
@@ -125,41 +133,46 @@ export class HeroController {
   }
 
   @Post('upload-csv')
-  @ApiOperation({ summary: 'Importa heróis em massa via arquivo CSV' }) 
+  @ApiOperation({ summary: 'Importa heróis em massa via arquivo CSV' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        file: { 
+        file: {
           type: 'string',
           format: 'binary',
         },
       },
     },
   })
-  @ApiResponse({ status: 201, description: '100 mil heróis processados com sucesso!' })
-  @ApiResponse({ status: 400, description: 'Arquivo inválido ou erro no processamento.' })
+  @ApiResponse({
+    status: 201,
+    description: '100 mil heróis processados com sucesso!',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Arquivo inválido ou erro no processamento.',
+  })
   @UseInterceptors(
-  FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads/csv',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `import-${uniqueSuffix}.csv`);
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/csv',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `import-${uniqueSuffix}.csv`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.originalname.match(/\.(csv)$/)) {
+          return cb(new Error('Apenas arquivos CSV são permitidos!'), false);
+        }
+        cb(null, true);
       },
     }),
-    fileFilter: (req, file, cb) => {
-      if (!file.originalname.match(/\.(csv)$/)) {
-        return cb(new Error('Apenas arquivos CSV são permitidos!'), false);
-      }
-      cb(null, true);
-    },
-  }),
-)
-async uploadCsv(@UploadedFile() file: Express.Multer.File) {
-  
-  return await this.heroService.importHeroesFromCsv(file.path);
-}
-
+  )
+  async uploadCsv(@UploadedFile() file: Express.Multer.File) {
+    return await this.heroService.importHeroesFromCsv(file.path);
+  }
 }

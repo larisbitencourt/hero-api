@@ -20,9 +20,3 @@ export class WebhookDto {
   @IsNotEmpty()
   payload: CreateHeroDto;
 }
-
-// export class WebhookDto {
-//   eventId: string;
-//   eventType: string;
-//   payload: object;
-// }

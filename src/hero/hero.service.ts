@@ -22,16 +22,17 @@ export class HeroService {
   }
 
   async uploadFilePath(id: number, filePath: string): Promise<Hero> {
-    const hero = await this.findOne(id); 
+    const hero = await this.findOne(id);
 
     if (hero.photoUrl) {
- 
-    if (fs.existsSync(hero.photoUrl)) {
-      fs.unlinkSync(hero.photoUrl); 
+      if (fs.existsSync(hero.photoUrl)) {
+        fs.unlinkSync(hero.photoUrl);
+      }
     }
-  }
-    hero.photoUrl = filePath; 
-    return this.heroRepository.save(hero); 
+
+    hero.photoUrl = filePath;
+
+    return this.heroRepository.save(hero);
   }
 
   async findAll(): Promise<Hero[]> {
@@ -46,7 +47,6 @@ export class HeroService {
     }
 
     return hero;
-   
   }
 
   async update(id: number, data: Partial<Hero>): Promise<Hero> {
@@ -54,19 +54,17 @@ export class HeroService {
 
     Object.assign(hero, data);
     return this.heroRepository.save(hero);
-
   }
 
   async remove(id: number): Promise<void> {
     const hero = await this.findOne(id);
     await this.heroRepository.remove(hero);
-
   }
 
-async importHeroesFromCsv(filePath: string) {
+  async importHeroesFromCsv(filePath: string) {
     const fileName = filePath.split('/').pop() || 'arquivo.csv';
     const heroesToSave = [];
-    const errorsList = []; 
+    const errorsList = [];
     const batchSize = 1000;
     let currentLine = 0;
 
@@ -77,7 +75,6 @@ async importHeroesFromCsv(filePath: string) {
         currentLine++;
 
         try {
-          
           const validatedHero = validateHeroRow(row);
           heroesToSave.push(validatedHero);
 
@@ -86,12 +83,11 @@ async importHeroesFromCsv(filePath: string) {
             heroesToSave.length = 0;
           }
         } catch (error) {
-         
           errorsList.push({
             line: currentLine,
             column: error.column || null,
             message: error.message,
-            rowData: row, 
+            rowData: row,
           });
         }
       }
@@ -102,8 +98,8 @@ async importHeroesFromCsv(filePath: string) {
 
       if (errorsList.length > 0) {
         await this.logService.createLog({
-         fileName: fileName,
-         errors: errorsList 
+          fileName: fileName,
+          errors: errorsList,
         });
       }
 
@@ -116,13 +112,10 @@ async importHeroesFromCsv(filePath: string) {
           totalErrors: errorsList.length,
         },
       };
-
     } catch (error) {
       throw new Error(`Erro crítico no processamento: ${error.message}`);
     } finally {
-     
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
   }
-
 }
