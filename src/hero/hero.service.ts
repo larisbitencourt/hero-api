@@ -13,7 +13,7 @@ export class HeroService {
   constructor(
     @InjectRepository(Hero)
     private readonly heroRepository: Repository<Hero>,
-    private readonly logService: LogService, //
+    private readonly logService: LogService,
   ) {}
 
   async create(data: CreateHeroDto): Promise<Hero> {

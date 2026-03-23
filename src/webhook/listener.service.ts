@@ -40,7 +40,7 @@ export class ListenerService implements OnModuleInit {
       const response = await this.sqsClient.send(command);
 
       if (!response.Messages || response.Messages.length === 0) {
-        continue; // nenhuma mensagem para processar
+        continue;
       }
 
       for (const message of response.Messages) {
@@ -50,7 +50,6 @@ export class ListenerService implements OnModuleInit {
 
           const lockKey = `lock:event:${event.eventId}`;
 
-          // Tenta criar lock atômico no Redis
           const lockAcquired = await this.redis.set(
             lockKey,
             'locked',
@@ -63,21 +62,19 @@ export class ListenerService implements OnModuleInit {
             console.log(
               `Evento ${event.eventId} já está sendo processado. Ignorando.`,
             );
-            // Deleta a mensagem da fila pra não ficar pendente
             await this.sqsClient.send(
               new DeleteMessageCommand({
                 QueueUrl: queueUrl,
                 ReceiptHandle: message.ReceiptHandle!,
               }),
             );
-            continue; // pula pro próximo evento
+            continue;
           }
 
           console.log(`Processando evento ${event.eventId}...`);
           await this.heroService.create(event.payload);
           console.log(`Evento ${event.eventId} processado e gravado no banco.`);
 
-          // Deleta a mensagem da fila SQS **após salvar no banco**
           await this.sqsClient.send(
             new DeleteMessageCommand({
               QueueUrl: queueUrl,
@@ -87,7 +84,6 @@ export class ListenerService implements OnModuleInit {
         } catch (err) {
           console.error('Erro ao processar mensagem SQS:', err);
         } finally {
-          // Sempre garante que o lock será liberado
           if (message.Body) {
             const snsMessage = JSON.parse(message.Body).Message;
             const event = JSON.parse(snsMessage);
